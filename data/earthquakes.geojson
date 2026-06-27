@@ -1545,17 +1545,17 @@
       "properties": {
         "date": "27",
         "time": "June",
-        "latitude": 13.81,
-        "longitude": 120.59,
-        "depth_km": 113.0,
-        "magnitude": 2.3,
-        "location": "005km S 65Â° W of Calatagan (Batangas)"
+        "latitude": 13.96,
+        "longitude": 120.65,
+        "depth_km": 112.0,
+        "magnitude": 2.5,
+        "location": "009km N 78Â° W of Balayan (Batangas)"
       },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          120.59,
-          13.81
+          120.65,
+          13.96
         ]
       }
     },
