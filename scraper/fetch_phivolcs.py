@@ -38,23 +38,16 @@ def parse_table():
                 lat = float(cols[1])
                 lon = float(cols[2])
 
-                feature = {
-                    "type": "Feature",
-                    "properties": {
-                        "Date Time": cols[0],
-                        "Latitude": lat,
-                        "Longitude": lon,
-                        "Depth (KM)": float(cols[3]),
-                        "Magnitude": float(cols[4]),
-                        "Location": cols[5]
-                    },
-                    "geometry": {
-                        "type": "Point",
-                        "coordinates": [lon, lat, float(cols[3])]
-                    }
-                }
-
-                features.append(feature)
+            feature = build_feature(
+                cols[0],
+                lat,
+                lon,
+                float(cols[3]),
+                float(cols[4]),
+                cols[5]
+            )
+            
+            features.append(feature)
 
             except Exception:
                 continue
@@ -68,6 +61,12 @@ def parse_table():
     }
 
 def build_feature(date_time, lat, lon, depth, mag, location):
+    # Example PHIVOLCS format:
+    # "28 June 2026 - 03:15 PM"
+    dt = datetime.strptime(date_time, "%d %B %Y - %I:%M %p")
+
+    date_part = dt.strftime("%Y%m%d")   # YYYYMMDD
+    time_part = dt.strftime("%H:%M")    # HH:MM (24-hour)
 
     return {
         "type": "Feature",
@@ -82,7 +81,7 @@ def build_feature(date_time, lat, lon, depth, mag, location):
         },
         "geometry": {
             "type": "Point",
-            "coordinates": [float(lon), float(lat)]
+            "coordinates": [float(lon), float(lat), float(depth)]
         }
     }
     save_geojson(data)
