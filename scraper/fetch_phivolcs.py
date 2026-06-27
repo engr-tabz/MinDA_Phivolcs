@@ -9,8 +9,45 @@ URL = "https://earthquake.phivolcs.dost.gov.ph/"
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
+def build_feature(date_time, lat, lon, depth, mag, location):
+    """
+    Converts the PHIVOLCS date/time string into separate date and time fields.
+
+    Expected input format:
+    "28 June 2026 - 03:15 PM"
+
+    Output:
+    date -> YYYYMMDD
+    time -> HH:MM (24-hour)
+    """
+
+    dt = datetime.strptime(date_time, "%d %B %Y - %I:%M %p")
+
+    date_part = dt.strftime("%Y%m%d")
+    time_part = dt.strftime("%H:%M")
+
+    return {
+        "type": "Feature",
+        "properties": {
+            "date": date_part,
+            "time": time_part,
+            "latitude": float(lat),
+            "longitude": float(lon),
+            "depth_km": float(depth),
+            "magnitude": float(mag),
+            "location": location
+        },
+        "geometry": {
+            "type": "Point",
+            "coordinates": [float(lon), float(lat), float(depth)]
+        }
+    }
+
+
 def parse_table():
-    headers = {"User-Agent": "Mozilla/5.0"}
+    headers = {
+        "User-Agent": "Mozilla/5.0"
+    }
 
     r = requests.get(URL, headers=headers, timeout=30, verify=False)
     r.raise_for_status()
@@ -20,7 +57,7 @@ def parse_table():
     tables = soup.find_all("table")
 
     if not tables:
-        raise Exception("No tables found at all on page")
+        raise Exception("No tables found on the page.")
 
     features = []
 
@@ -30,26 +67,25 @@ def parse_table():
         for row in rows:
             cols = [c.get_text(strip=True) for c in row.find_all("td")]
 
-            # skip non-data rows
+            # Skip header or incomplete rows
             if len(cols) < 6:
                 continue
 
             try:
-                lat = float(cols[1])
-                lon = float(cols[2])
+                feature = build_feature(
+                    cols[0],          # Date Time
+                    cols[1],          # Latitude
+                    cols[2],          # Longitude
+                    cols[3],          # Depth
+                    cols[4],          # Magnitude
+                    cols[5]           # Location
+                )
 
-            feature = build_feature(
-                cols[0],
-                lat,
-                lon,
-                float(cols[3]),
-                float(cols[4]),
-                cols[5]
-            )
-            
-            features.append(feature)
+                features.append(feature)
 
-            except Exception:
+            except Exception as e:
+                print(f"Skipping row: {cols}")
+                print(f"Reason: {e}")
                 continue
 
     print(f"Parsed features: {len(features)}")
@@ -60,28 +96,14 @@ def parse_table():
         "features": features
     }
 
-def build_feature(date_time, lat, lon, depth, mag, location):
-    # Example PHIVOLCS format:
-    # "28 June 2026 - 03:15 PM"
-    dt = datetime.strptime(date_time, "%d %B %Y - %I:%M %p")
 
-    date_part = dt.strftime("%Y%m%d")   # YYYYMMDD
-    time_part = dt.strftime("%H:%M")    # HH:MM (24-hour)
+def save_geojson(data, filename="earthquakes.geojson"):
+    with open(filename, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
 
-    return {
-        "type": "Feature",
-        "properties": {
-            "date": date_part,
-            "time": time_part,
-            "latitude": lat,
-            "longitude": lon,
-            "depth_km": depth,
-            "magnitude": mag,
-            "location": location
-        },
-        "geometry": {
-            "type": "Point",
-            "coordinates": [float(lon), float(lat), float(depth)]
-        }
-    }
+    print(f"Saved {len(data['features'])} features to {filename}")
+
+
+if __name__ == "__main__":
+    data = parse_table()
     save_geojson(data)
