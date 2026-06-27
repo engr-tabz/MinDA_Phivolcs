@@ -10,73 +10,62 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 def parse_table():
-    headers = {
-        "User-Agent": "Mozilla/5.0"
-    }
+    headers = {"User-Agent": "Mozilla/5.0"}
 
-    r = requests.get(
-        URL,
-        headers=headers,
-        timeout=30,
-        verify=False
-    )
-
+    r = requests.get(URL, headers=headers, timeout=30, verify=False)
     r.raise_for_status()
 
     soup = BeautifulSoup(r.text, "html.parser")
 
-    table = soup.find("table")
-    if not table:
-        raise Exception("No table found on page. HTML structure may have changed.")
+    tables = soup.find_all("table")
 
-    rows = table.find_all("tr")[1:]  # skip header
+    if not tables:
+        raise Exception("No tables found at all on page")
 
     features = []
 
-    for row in rows:
-        cols = [c.get_text(strip=True) for c in row.find_all("td")]
+    for table in tables:
+        rows = table.find_all("tr")
 
-        if len(cols) < 6:
-            continue
+        for row in rows:
+            cols = [c.get_text(strip=True) for c in row.find_all("td")]
 
-        try:
-            date_time = cols[0]
-            latitude = float(cols[1])
-            longitude = float(cols[2])
-            depth = float(cols[3])
-            magnitude = float(cols[4])
-            location = cols[5]
+            # skip non-data rows
+            if len(cols) < 6:
+                continue
 
-            feature = {
-                "type": "Feature",
-                "properties": {
-                    "Date Time": date_time,
-                    "Latitude": latitude,
-                    "Longitude": longitude,
-                    "Depth (KM)": depth,
-                    "Magnitude": magnitude,
-                    "Location": location
-                },
-                "geometry": {
-                    "type": "Point",
-                    "coordinates": [longitude, latitude, depth]
+            try:
+                lat = float(cols[1])
+                lon = float(cols[2])
+
+                feature = {
+                    "type": "Feature",
+                    "properties": {
+                        "Date Time": cols[0],
+                        "Latitude": lat,
+                        "Longitude": lon,
+                        "Depth (KM)": float(cols[3]),
+                        "Magnitude": float(cols[4]),
+                        "Location": cols[5]
+                    },
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [lon, lat, float(cols[3])]
+                    }
                 }
-            }
 
-            features.append(feature)
+                features.append(feature)
 
-        except ValueError:
-            # skip malformed rows
-            continue
+            except Exception:
+                continue
 
-    geojson = {
+    print(f"Parsed features: {len(features)}")
+
+    return {
         "type": "FeatureCollection",
         "generated_at": datetime.utcnow().isoformat() + "Z",
         "features": features
     }
-
-    return geojson
-
 
 def save_geojson(data):
     path = "data/earthquakes.geojson"
