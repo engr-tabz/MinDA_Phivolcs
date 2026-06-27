@@ -72,11 +72,12 @@ def build_feature(date_time, lat, lon, depth, mag, location):
     return {
         "type": "Feature",
         "properties": {
-            "datetime": date_time,
-            "latitude": float(lat),
-            "longitude": float(lon),
-            "depth_km": float(depth),
-            "magnitude": float(mag),
+            "date": date_part,
+            "time": time_part,
+            "latitude": lat,
+            "longitude": lon,
+            "depth_km": depth,
+            "magnitude": mag,
             "location": location
         },
         "geometry": {
