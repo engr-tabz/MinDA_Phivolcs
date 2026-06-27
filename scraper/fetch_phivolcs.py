@@ -67,15 +67,21 @@ def parse_table():
         "features": features
     }
 
-def save_geojson(data):
-    path = "data/earthquakes.geojson"
+def build_feature(date_time, lat, lon, depth, mag, location):
 
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
-
-    print(f"Saved {len(data['features'])} records")
-
-
-if __name__ == "__main__":
-    data = parse_table()
+    return {
+        "type": "Feature",
+        "properties": {
+            "datetime": date_time,
+            "latitude": float(lat),
+            "longitude": float(lon),
+            "depth_km": float(depth),
+            "magnitude": float(mag),
+            "location": location
+        },
+        "geometry": {
+            "type": "Point",
+            "coordinates": [float(lon), float(lat)]
+        }
+    }
     save_geojson(data)
