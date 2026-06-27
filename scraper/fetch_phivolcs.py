@@ -6,7 +6,20 @@ from datetime import datetime
 URL = "https://earthquake.phivolcs.dost.gov.ph/"
 
 def parse_table():
-    r = requests.get(URL, timeout=30)
+    import urllib3
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+headers = {
+    "User-Agent": "Mozilla/5.0"
+}
+
+r = requests.get(
+    URL,
+    headers=headers,
+    timeout=30,
+    verify=False
+)
     r.raise_for_status()
 
     soup = BeautifulSoup(r.text, "html.parser")
