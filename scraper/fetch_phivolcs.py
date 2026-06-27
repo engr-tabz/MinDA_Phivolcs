@@ -85,4 +85,4 @@ def build_feature(date_time, lat, lon, depth, mag, location):
             "coordinates": [float(lon), float(lat)]
         }
     }
-    save_geojson(data).
+    save_geojson(data)
